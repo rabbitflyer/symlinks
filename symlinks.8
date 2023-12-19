@@ -1,11 +1,11 @@
-.TH SYMLINKS 8 "April 2014" "Version 1.4.3"
+.TH SYMLINKS 8 "December 2023" "Version 1.4.4r"
 
 .SH NAME
 symlinks \- symbolic link maintenance utility
 .SH SYNOPSIS
 .B symlinks
 [
-.B -cdorstv
+.B -cadorstv
 ]
 dirlist
 .SH DESCRIPTION
@@ -78,6 +78,10 @@ are prefixed with
 .B changed
 in the output.
 .TP
+.I -a
+alters the behavior of -c to instead convert relative links to absolute links.
+This permits links to be freely moved around the filesystem while still maintaining their validity.
+.TP
 .I -d
 causes
 .B dangling
@@ -115,6 +119,6 @@ does not recurse or change links across filesystems.
 .PP
 .SH AUTHOR
 .B symlinks 
-was created by Mark Lord <mlord@pobox.com>. The current maintainer is J. Brandt Buckley <brandt@runlevel1.com>.
+was created by Mark Lord <mlord@pobox.com>. The current maintainer is J. Brandt Buckley <brandt@runlevel1.com>. This version has additional functionality added by rabbitflyer <87136246+rabbitflyer@users.noreply.github.com>.
 .SH SEE ALSO
 .BR symlink (2)

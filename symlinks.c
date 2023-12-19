@@ -34,6 +34,7 @@
 static char *progname;
 static int verbose = 0,
            fix_links = 0,
+           want_abs = 0,
            recurse = 0,
            delete = 0,
            shorten = 0,
@@ -215,7 +216,7 @@ static void fix_symlink(char *path, dev_t my_dev) {
     static char lpath[PATH_MAX], new[PATH_MAX], abspath[PATH_MAX];
     char *p, *np, *lp, *tail, *msg;
     struct stat stbuf, lstbuf;
-    int fix_abs = 0, fix_messy = 0, fix_long = 0;
+    int fix_abs = 0, fix_messy = 0, fix_long = 0, fix_rel = 0;
     size_t c;
     
     if ((c = readlink(path, lpath, sizeof(lpath))) == -1) {
@@ -266,13 +267,24 @@ static void fix_symlink(char *path, dev_t my_dev) {
     
     if (single_fs && lstbuf.st_dev != my_dev) {
         msg = "other_fs:";
-    } else if (lpath[0] == '/') {
-        msg = "absolute:";
-        fix_abs = 1;
-    } else if (verbose) {
-        msg = "relative:";
+    } else if (want_abs) {
+        if (lpath[0] != '/') {
+            msg = "relative:";
+            fix_rel = 1;
+        } else if (verbose) {
+            msg = "absolute:";
+        } else {
+            msg = NULL;
+        }
     } else {
-        msg = NULL;
+        if (lpath[0] == '/') {
+            msg = "absolute:";
+            fix_abs = 1;
+        } else if (verbose) {
+            msg = "relative:";
+        } else {
+            msg = NULL;
+        }
     }
     
     fix_messy = tidy_path(strcpy(new, lpath));
@@ -281,7 +293,7 @@ static void fix_symlink(char *path, dev_t my_dev) {
         fix_long = shorten_path(new, path);
     }
     
-    if (!fix_abs) {
+    if ((!fix_abs) && (!fix_rel)) {
         if (fix_messy) {
             msg = "messy:   ";
         } else if (fix_long) {
@@ -293,14 +305,14 @@ static void fix_symlink(char *path, dev_t my_dev) {
         printf("%s %s -> %s\n", msg, path, lpath);
     }
     
-    if (!(fix_links || testing) || !(fix_messy || fix_abs || fix_long)) {
+    if (!(fix_links || testing) || !(fix_messy || fix_abs || fix_long || fix_rel)) {
         return;
     }
     
     if (fix_abs) {
         /* convert an absolute link to relative: */
         /* point tail at first part of lpath that differs from path */
-        /* point p    at first part of path  that differs from lpath */
+        /* point p    at first part of path that differs from lpath */
         (void) tidy_path(lpath);
         tail = lp = lpath;
         p = path;
@@ -334,6 +346,10 @@ static void fix_symlink(char *path, dev_t my_dev) {
         if (shorten) {
             (void) shorten_path(new, path);
         }
+    } else if (fix_rel) {
+        /* convert a relative link to absolute: */
+        /* just use abspath as the new target */
+        strcpy(new, abspath);
     }
     
     shorten_path(new, path);
@@ -392,9 +408,10 @@ static void dirwalk(char *path, unsigned long pathlen, dev_t dev) {
 
 static void usage_error(void) {
     fprintf(stderr, progver, progname);
-    fprintf(stderr, "Usage:\t%s [-cdorstv] dirlist\n\n", progname);
+    fprintf(stderr, "Usage:\t%s [-cadorstv] dirlist\n\n", progname);
     fprintf(stderr, "Flags:"
             "\t-c  change absolute/messy links to relative\n"
+            "\t-a  when combined with -c, change relative links to absolute\n"
             "\t-d  delete dangling links\n"
             "\t-o  warn about links across file systems\n"
             "\t-r  recurse into subdirs\n"
@@ -434,6 +451,7 @@ int main(int argc, char **argv) {
             
             while ((c = *p++)) {
                 if (c == 'c') { fix_links = 1;
+                } else if (c == 'a') { want_abs = 1;
                 } else if (c == 'd') { delete    = 1;
                 } else if (c == 'o') { single_fs = 0;
                 } else if (c == 'r') { recurse   = 1;

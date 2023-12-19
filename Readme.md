@@ -39,6 +39,11 @@ Usage
     $ symlinks -rc [path]
 
 
+### Convert relative symlink to absolute:
+
+    $ symlinks -rca [path]
+
+
 ### More options:
 
     $ symlinks -h
@@ -46,6 +51,9 @@ Usage
 
 Changes
 -------
+
+#### v1.4.4r
+- First version by rabbitflyer. Added ability to convert relative links to absolute links.
 
 #### v1.4.3
 - Fixed LFS support bug that caused erratic behavior on 32-bit systems.
@@ -74,3 +82,4 @@ Credit
 
 Symlinks was created by **Mark Lord** <mlord@pobox.com>.  
 Maintained by **J. Brandt Buckley** <brandt@runlevel1.com>.  
+Added functionality by **rabbitflyer** <87136246+rabbitflyer@users.noreply.github.com>.
